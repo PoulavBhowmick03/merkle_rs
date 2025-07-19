@@ -1,17 +1,25 @@
+use sha2::Digest;
+
 use crate::hasher::Hasher;
 #[derive(Clone)]
-pub struct Tree<H: Hasher> {
-    nodes: Vec<H>,
-    leaves: Vec<H>,
+pub struct Tree<H: Hasher>
+where
+    H::Output: Clone + Digest,
+{
+    nodes: Vec<H::Output>,
+    leaves: Vec<H::Output>,
     height: i32,
 }
 
-impl<H: Clone + Hasher> Tree<H> {
+impl<H: Clone + Hasher> Tree<H>
+where
+    H::Output: Clone + Digest,
+{
     // fn default() -> Self {
     //     Self { nodes: (), leaves: (), height: () }
     // }
 
-    pub fn new(leaves: &[H]) -> Tree<H> {
+    pub fn new(leaves: &[H::Output]) -> Tree<H> {
         if leaves.is_empty() {
             println!("You need to enter leaves for the merkle tree to exist")
         }
@@ -23,13 +31,13 @@ impl<H: Clone + Hasher> Tree<H> {
         };
     }
 
-    pub fn root(&self) -> H {
+    pub fn root(&self) -> H::Output {
         self.nodes.last().cloned().unwrap()
     }
     pub fn height(&self) -> i32 {
         self.height
     }
-    pub fn leaves(&self) -> Vec<H> {
+    pub fn leaves(&self) -> Vec<H::Output> {
         self.clone().leaves
     }
 }
