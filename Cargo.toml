@@ -1,0 +1,2 @@
+[workspace]
+members = ["merkle-tree", "merkle-cli"]
