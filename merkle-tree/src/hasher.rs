@@ -4,46 +4,24 @@ use sha2::{Digest, Sha256};
 pub trait Hasher {
     type Output;
     fn hash_leaf(data: &[u8]) -> Self::Output;
-    fn hash_parent(left: &[u8], right: &[u8]) -> Self::Output;
+    fn hash_parent(left: &Self::Output, right: &Self::Output) -> Self::Output;
 }
 
 impl<H: Hasher> Tree<H>
 where
-    H::Output: Clone + Digest,
+    H::Output: Clone,
 {
     pub fn hash_leaf(data: &[u8]) -> H::Output {
         H::hash_leaf(data)
     }
 
-    pub fn hash_parent(left: &[u8], right: &[u8]) -> H::Output {
+    pub fn hash_parent(left: &H::Output, right: &H::Output) -> H::Output {
         H::hash_parent(left, right)
     }
 }
 
-impl<H> Hasher for Tree<H>
-where
-    H: Hasher,
-    <H as Hasher>::Output: Clone + Digest,
-{
-    type Output = [u8; 32];
-
-    fn hash_leaf(data: &[u8]) -> Self::Output {
-        let hasher = Sha256::digest(data);
-        let mut output = [0u8; 32];
-        output.copy_from_slice(&hasher);
-        output
-    }
-    fn hash_parent(left: &[u8], right: &[u8]) -> Self::Output {
-        let mut hasher = Sha256::new();
-        hasher.update(left);
-        hasher.update(right);
-        let mut output = [0u8; 32];
-        output.copy_from_slice(&hasher.finalize());
-        output
-    }
-}
-
 /// A zero‑state marker for SHA‑256 hashing
+#[derive(Clone, Debug)]
 pub struct Sha256Hasher;
 
 impl Hasher for Sha256Hasher {
@@ -51,19 +29,19 @@ impl Hasher for Sha256Hasher {
 
   fn hash_leaf(data: &[u8]) -> Self::Output {
     let digest = Sha256::digest(data);
-    let mut buf = [0u8; 32];
-    buf.copy_from_slice(&digest);
-    buf
+    let mut output = [0u8; 32];
+    output.copy_from_slice(&digest);
+    output
   }
 
-  fn hash_parent(left: &[u8], right: &[u8]) -> Self::Output {
+  fn hash_parent(left: &Self::Output, right: &Self::Output) -> Self::Output {
     let mut hasher = Sha256::new();
     hasher.update(left);
     hasher.update(right);
     let digest = hasher.finalize();
-    let mut buf = [0u8; 32];
-    buf.copy_from_slice(&digest);
-    buf
+    let mut output = [0u8; 32];
+    output.copy_from_slice(&digest);
+    output
   }
 }
 
@@ -81,7 +59,9 @@ mod tests {
     fn test_hash_parent() {
         let left = b"left child";
         let right = b"right child";
-        let hash = Sha256Hasher::hash_parent(left, right);
+        let left_hash = Sha256Hasher::hash_leaf(left);
+        let right_hash = Sha256Hasher::hash_leaf(right);
+        let hash = Sha256Hasher::hash_parent(&left_hash, &right_hash);
         assert_eq!(hash.len(), 32);
     }
 }
