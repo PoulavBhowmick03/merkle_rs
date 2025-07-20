@@ -66,7 +66,10 @@ where
         self.clone().leaves
     }
 
-    pub fn prove(&self, index: usize) -> Result<Proof<H::Output>, ProofError> {
+    pub fn prove(&self, index: usize) -> Result<Proof<H>, ProofError> 
+    where
+        H::Output: Clone,
+    {
         if self.leaves.is_empty() {
             return Err(ProofError::NoLeaves);
         }
@@ -107,7 +110,7 @@ where
             curr_index /= 2;
             current = next_level;
         }
-        Ok(Proof::new(siblings))
+        Ok(Proof::<H>::new(siblings))
     }
 }
 
